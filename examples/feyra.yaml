@@ -1,0 +1,72 @@
+name: feyra
+depth_min: 3
+depth_max: 65535
+include:
+  - baikort
+primitives:
+  - type: COPY
+    name: COPY
+    description: >-
+      `% -> %`
+
+      copy value from register
+      to register
+    opcode: "100"
+    argc: 2
+    args:
+      - register
+      - register
+    annotation:
+      - register to which the value will be set
+      - register from which the value will be read
+  - type: instruction
+    name: SWAP
+    description: >-
+      `% <-> %`
+
+      swap values in registers
+    opcode: "110"
+    argc: 2
+    args:
+      - register
+      - register
+    annotation:
+      - register A
+      - register V
+  - type: instruction
+    name: CLONE
+    description: >-
+      `@ -> @`
+
+      clone value from component
+      to component
+    opcode: "101"
+    argc: 4
+    args:
+      - component
+      - raw
+      - component
+      - raw
+    annotation:
+      - component to which the value will be set
+      - index by which the value will be set
+      - component from which the value will be read
+      - index by which the value will be read
+  - type: instruction
+    name: SWITCH
+    description: >-
+      `@ <-> @`
+
+      swap values in components
+    opcode: "111"
+    argc: 4
+    args:
+      - component
+      - raw
+      - component
+      - raw
+    annotation:
+      - component A
+      - index of component A
+      - component B
+      - index of component B

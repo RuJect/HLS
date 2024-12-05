@@ -1,0 +1,105 @@
+name: baikort
+depth_min: 2
+depth_max: 65535
+include: []
+primitives:
+  # registers
+  - type: register
+    name: PC
+    description: >-
+      ID of the component from which
+      the instructions will be executed
+    address: "0"
+    access: full
+    is_volatile: false
+    is_static: false
+    value_in: component
+    value_out: component
+    default: null
+  - type: register
+    name: PI
+    description: >-
+      Index of the next instruction
+      to be executed
+    address: "1"
+    access: full
+    is_volatile: false
+    is_static: false
+    value_in: raw
+    value_out: raw
+    default: null
+
+  # instructions
+  - type: instruction
+    name: SET
+    description: >-
+      `x -> %`
+
+      set value in register
+    opcode: "00"
+    argc: 2
+    args:
+      - register
+      - raw
+    annotation:
+      - register to which the value will be set
+      - value to be set
+  - type: instruction
+    name: WRITE
+    description: >-
+      `x -> @`
+
+      write value to component
+    opcode: "01"
+    argc: 2
+    args:
+      - component
+      - raw
+      - raw
+    annotation:
+      - component to which the value will be set
+      - index by which the value will be set
+      - value to be set
+  - type: instruction
+    name: LOAD
+    description: >-
+      `@ -> %`
+
+      load value from component
+      to register
+    opcode: "10"
+    argc: 3
+    args:
+      - register
+      - component
+      - raw
+    annotation:
+      - register to which the value will be set
+      - component from which the value will be read
+      - index by which the value will be read
+  - type: instruction
+    name: STORE
+    description: >-
+      `% -> @`
+
+      store value from register
+      to component
+    opcode: "11"
+    argc: 3
+    args:
+      - component
+      - raw
+      - register
+    annotation:
+      - component to which the value will be set
+      - index by which the value will be set
+      - register from which the value will be read
+  
+  # components
+  - type: component
+    name: RAM
+    description: >-
+      Basic and required component
+    id: "0"
+    access: full
+    is_volatile: false

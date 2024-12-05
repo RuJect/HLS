@@ -1,0 +1,360 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema",
+  "title": "HLS",
+  "description": "Hang Layer Specification",
+  "definitions": {
+    "primitive_name": {
+      "maxLength": 32,
+      "minLength": 1,
+      "pattern": "^[A-Z][A-Z0-9_]*$",
+      "examples": [
+        "TEST"
+      ]
+    },
+    "layer_name": {
+      "type": "string",
+      "maxLength": 32,
+      "minLength": 1,
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "examples": [
+        "baikort"
+      ]
+    },
+    "binary": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "default": null,
+      "pattern": "^[01]+$",
+      "minLength": 1,
+      "maxLength": 65535
+    },
+    "depth": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 65535
+    },
+    "value_type": {
+      "type": "string",
+      "enum": [
+        "raw",
+        "register",
+        "instruction",
+        "component",
+        "int",
+        "uint",
+        "str"
+      ],
+      "examples": [
+        "raw"
+      ],
+      "description": "raw - usual binary data\nregister - register address\ninstruction - instruction opcode\ncomponent - component id\nint - signed integer\nuint - unsigned integer\nstr - string"
+    },
+    "access_type": {
+      "type": "string",
+      "enum": [
+        "none",
+        "read",
+        "write",
+        "full"
+      ],
+      "examples": [
+        "full"
+      ],
+      "description": "none: no access\nread: `get` and `read`\nwrite: `set` and `write`\nfull: read + write"
+    },
+    "primitive_type": {
+      "type": "string",
+      "enum": [
+        "register",
+        "instruction",
+        "component"
+      ]
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "maxLength": 32,
+          "minLength": 1,
+          "examples": [
+            "Test"
+          ]
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "examples": [
+            "No description"
+          ]
+        },
+        "author": {
+          "type": "string",
+          "minLength": 1,
+          "examples": [
+            "local"
+          ]
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "primitive": {
+      "allOf": [
+        {
+          "type": "object",
+          "properties": {
+            "name": {
+              "$ref": "#/definitions/primitive_name",
+              "type": [
+                "string",
+                "array"
+              ],
+              "item": {
+                "$ref": "#/definitions/primitive_name"
+              },
+              "minItems": 1
+            },
+            "type": {
+              "$ref": "#/definitions/primitive_type"
+            }
+          }
+        },
+        {
+          "$ref": "#/definitions/metadata"
+        }
+      ]
+    },
+    "register": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/primitive"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "address": {
+              "$ref": "#/definitions/binary"
+            },
+            "access": {
+              "$ref": "#/definitions/access_type"
+            },
+            "is_volatile": {
+              "type": "boolean",
+              "examples": [
+                false
+              ],
+              "description": "if false then `get` always returns the previous received value via the `set`\nif true then behavior of a register is determined by its documentation"
+            },
+            "is_static": {
+              "type": "boolean",
+              "examples": [
+                false
+              ],
+              "description": "if true then `set` can only be called once"
+            },
+            "default": {
+              "$ref": "#/definitions/binary",
+              "description": "The default value for the register.\nWarning: it is not assigned directly, but by calling `set`. Therefore, if you don't want default value, then set null"
+            },
+            "value_in": {
+              "$ref": "#/definitions/value_type"
+            },
+            "value_out": {
+              "$ref": "#/definitions/value_type"
+            }
+          },
+          "required": [
+            "address",
+            "access",
+            "is_volatile",
+            "is_static",
+            "default",
+            "value_in",
+            "value_out"
+          ]
+        }
+      ]
+    },
+    "instruction": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/primitive"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "opcode": {
+              "$ref": "#/definitions/binary"
+            },
+            "annotation": {
+              "type": "array",
+              "minItems": 0,
+              "maxItems": 255,
+              "items": {
+                "type": "string"
+              },
+              "description": "Description for the arguments."
+            },
+            "argc": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255,
+              "description": "The number of arguments that the instruction requires."
+            },
+            "args": {
+              "type": "array",
+              "minItems": 0,
+              "maxItems": 255,
+              "items": {
+                "$ref": "#/definitions/value_type"
+              },
+              "description": "Types of arguments that the instruction accepts."
+            }
+          },
+          "required": [
+            "opcode",
+            "argc",
+            "args"
+          ]
+        }
+      ]
+    },
+    "component": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/primitive"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "id": {
+              "$ref": "#/definitions/binary"
+            },
+            "access": {
+              "$ref": "#/definitions/access_type"
+            },
+            "is_volatile": {
+              "type": "boolean",
+              "examples": [
+                false
+              ],
+              "description": "if false, then the component works according as s buffer: `read(X)` will return the value that was passed during the last call to `write(X, ...)`\nif true then behavior of a register is determined by its documentation"
+            }
+          },
+          "required": [
+            "id",
+            "access",
+            "is_volatile"
+          ]
+        }
+      ]
+    },
+    "layer": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/metadata"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "name": {
+              "$ref": "#/definitions/layer_name",
+              "type": [
+                "string",
+                "array"
+              ],
+              "item": {
+                "$ref": "#/definitions/layer_name"
+              },
+              "minItems": 1
+            },
+            "depth_min": {
+              "$ref": "#/definitions/depth",
+              "examples": [
+                1
+              ]
+            },
+            "depth_max": {
+              "$ref": "#/definitions/depth",
+              "examples": [
+                65535
+              ]
+            },
+            "include": {
+              "type": "array",
+              "item": {
+                "maxLength": 32,
+                "minLength": 1,
+                "pattern": "^[a-z][a-z0-9_]*$",
+                "examples": [
+                  "baikort"
+                ],
+                "description": "Parent layers to include."
+              }
+            },
+            "primitives": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "allOf": [
+                  {
+                    "if": {
+                      "properties": {
+                        "type": {
+                          "const": "register"
+                        }
+                      }
+                    },
+                    "then": {
+                      "$ref": "#/definitions/register"
+                    }
+                  },
+                  {
+                    "if": {
+                      "properties": {
+                        "type": {
+                          "const": "instruction"
+                        }
+                      }
+                    },
+                    "then": {
+                      "$ref": "#/definitions/instruction"
+                    }
+                  },
+                  {
+                    "if": {
+                      "properties": {
+                        "type": {
+                          "const": "component"
+                        }
+                      }
+                    },
+                    "then": {
+                      "$ref": "#/definitions/component"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "required": [
+            "name",
+            "depth_min",
+            "depth_max",
+            "include",
+            "primitives"
+          ]
+        }
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "$ref": "#/definitions/layer"
+    }
+  ]
+}
